@@ -15,4 +15,9 @@ class IndexController extends ControllerBase
                 Please don\'t provide us any personal information. Thanks');
         }
     }
+
+    public function detailAction()
+    {
+        
+    }
 }

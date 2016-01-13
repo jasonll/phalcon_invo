@@ -17,19 +17,13 @@ $di = new FactoryDefault();
 
 /**
  * We register the events manager
- */
+ **/
 $di->set('dispatcher', function() use ($di) {
 
 	$eventsManager = new EventsManager;
 
-	/**
-	 * Check if the user is allowed to access certain action using the SecurityPlugin
-	 */
 	$eventsManager->attach('dispatch:beforeDispatch', new SecurityPlugin);
 
-	/**
-	 * Handle exceptions and not-found exceptions using NotFoundPlugin
-	 */
 	$eventsManager->attach('dispatch:beforeException', new NotFoundPlugin);
 
 	$dispatcher = new Dispatcher;
@@ -37,6 +31,7 @@ $di->set('dispatcher', function() use ($di) {
 
 	return $dispatcher;
 });
+
 
 /**
  * The URL component is used to generate all kind of urls in the application
@@ -89,6 +84,46 @@ $di->set('db', function() use ($config) {
 		"password" => $config->database->password,
 		"dbname"   => $config->database->name
 	));
+});
+
+/**
+ * Memcached
+ */
+
+$di->set('memcached', function() use ($config) {
+	// Cache data for 2 days
+	$frontCache = new Phalcon\Cache\Frontend\Data(array(
+    	"lifetime" => 172800
+	));
+
+	$options = array(
+		"host"	  => $config->memcached->host,
+		"port"	  => $config->memcached->port,
+		"persistent" => $config->memcached->lifetime,
+	);
+
+	return new Phalcon\Cache\Backend\Libmemcached($frontCache, $options);
+});
+
+/**
+ * Redis
+ */
+$di->set('redis', function() use ($config) {
+	//Connect to redis
+    $redis = new Redis();
+    $redis->connect($config->redis->host, $config->redis->port);
+
+    //Create a Data frontend and set a default lifetime to 1 hour
+    $frontend = new Phalcon\Cache\Frontend\Data(array(
+        'lifetime' => $config->redis->lifetime
+    ));
+
+    //Create the cache passing the connection
+    $cache = new Phalcon\Cache\Backend\Redis($frontend, array(
+        'redis' => $redis
+    ));
+
+    return $cache;
 });
 
 /**
